@@ -90,6 +90,20 @@ router.use(async (ctx, next) => {
   }
 });
 
+
+
+router.get('genrate', async (ctx, next) => {
+  const db = await dbh(ctx);
+  const entries = await db.query('SELECT * FROM entry ORDER BY updated_at')
+  for (let entry of entries) {
+    entry.html = await htmlify(ctx, entry.description);
+    await cache.setAsync(entry.keyword, entry.html);
+  }
+  ctx.body = {
+    result: entries.length+' html files is cached',
+  };
+});
+
 router.get('initialize', async (ctx, next) => {
   const db = await dbh(ctx);
   await db.query('DELETE FROM entry WHERE id > 7101');
@@ -98,11 +112,6 @@ router.get('initialize', async (ctx, next) => {
   ctx.body = {
     result: 'ok',
   };
-  const entries = await db.query('SELECT * FROM entry ORDER BY updated_at DESC LIMIT ? OFFSET ?', [perPage, perPage * (page - 1)])
-  for (let entry of entries) {
-    entry.html = await htmlify(ctx, entry.description);
-    await cache.setAsync(entry.keyword, entry.html);
-  }
 });
 
 router.get('', async (ctx, next) => {
