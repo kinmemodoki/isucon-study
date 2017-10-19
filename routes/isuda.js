@@ -65,7 +65,22 @@ const setName = async (ctx) => {
     ctx.state.user_name = cachedName;
     return true;
   }
+  ctx.status = 403;
   return false;
+  return false;
+
+  const db = await dbh(ctx);
+  const userId = ctx.session.userId;
+  if (userId != null) {
+    const users = await db.query('SELECT name FROM user WHERE id = ?', [userId.toString()]);
+    if (users.length > 0) {
+      ctx.state.user_name = users[0].name;
+    } else {
+      ctx.status = 403;
+      return false;
+    }
+  }
+  return true;
 };
 
 const authenticate = (ctx) => {
