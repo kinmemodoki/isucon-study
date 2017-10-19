@@ -90,20 +90,6 @@ router.use(async (ctx, next) => {
   }
 });
 
-
-
-router.get('genrate', async (ctx, next) => {
-  const db = await dbh(ctx);
-  const entries = await db.query('SELECT * FROM entry ORDER BY updated_at')
-  for (let entry of entries) {
-    entry.html = await htmlify(ctx, entry.description);
-    await cache.setAsync(entry.keyword, entry.html);
-  }
-  ctx.body = {
-    result: entries.length+' html files is cached',
-  };
-});
-
 router.get('initialize', async (ctx, next) => {
   const db = await dbh(ctx);
   await db.query('DELETE FROM entry WHERE id > 7101');
@@ -124,9 +110,8 @@ router.get('', async (ctx, next) => {
   const db = await dbh(ctx);
   const entries = await db.query('SELECT * FROM entry ORDER BY updated_at DESC LIMIT ? OFFSET ?', [perPage, perPage * (page - 1)])
   for (let entry of entries) {
-    entry.html = await cache.getAsync(entry.keyword)
-    if(!entry.html)
-      entry.html = await htmlify(ctx, entry.description);
+    
+    entry.html = await htmlify(ctx, entry.description, entry.id);
     entry.stars = await loadStars(ctx, entry.keyword);
   }
 
@@ -275,7 +260,7 @@ router.get('keyword/:keyword', async (ctx, next) => {
     return;
   }
   ctx.state.entry = entries[0];
-  ctx.state.entry.html = await htmlify(ctx, entries[0].description);
+  ctx.state.entry.html = await htmlify(ctx, entries[0].description, entries[0].id);
   ctx.state.entry.stars = await loadStars(ctx, keyword);
   await ctx.render('keyword');
 });
@@ -310,10 +295,13 @@ router.post('keyword/:keyword', async (ctx, next) => {
   await ctx.redirect('/');
 });
 
-const htmlify = async (ctx, content) => {
+const htmlify = async (ctx, content, id) => {
   if (content == null) {
     return '';
   }
+
+  const cachedHtml = await cache.getAsync(id);
+  if (cachedHtml) return cachedHtml;
 
   const db = await dbh(ctx);
   const keywords = await db.query('SELECT * FROM entry ORDER BY CHARACTER_LENGTH(keyword) DESC');
@@ -333,6 +321,7 @@ const htmlify = async (ctx, content) => {
   }
   result = result.replace(/\n/g, "<br />\n");
 
+  cache.set(id, result);
   return result;
 };
 
