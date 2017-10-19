@@ -5,6 +5,12 @@ const crypto = require('crypto');
 const axios = require('axios');
 const ejs = require('ejs');
 
+const redis = require("redis");
+const bluebird = require("bluebird");
+bluebird.promisifyAll(redis.RedisClient.prototype);
+bluebird.promisifyAll(redis.Multi.prototype);
+const cache = redis.createClient();
+
 let _config;
 const config = (key) => {
   if (!_config) {
@@ -92,6 +98,11 @@ router.get('initialize', async (ctx, next) => {
   ctx.body = {
     result: 'ok',
   };
+  const entries = await db.query('SELECT * FROM entry ORDER BY updated_at DESC LIMIT ? OFFSET ?', [perPage, perPage * (page - 1)])
+  for (let entry of entries) {
+    entry.html = await htmlify(ctx, entry.description);
+    await cache.setAsync(entry.keyword, entry.html);
+  }
 });
 
 router.get('', async (ctx, next) => {
@@ -104,7 +115,9 @@ router.get('', async (ctx, next) => {
   const db = await dbh(ctx);
   const entries = await db.query('SELECT * FROM entry ORDER BY updated_at DESC LIMIT ? OFFSET ?', [perPage, perPage * (page - 1)])
   for (let entry of entries) {
-    entry.html = await htmlify(ctx, entry.description);
+    entry.html = await cache.getAsync(entry.keyword)
+    if(!entry.html)
+      entry.html = await htmlify(ctx, entry.description);
     entry.stars = await loadStars(ctx, entry.keyword);
   }
 
