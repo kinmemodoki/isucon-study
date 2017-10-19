@@ -60,18 +60,16 @@ const dbh = async (ctx) => {
 
 const setName = async (ctx) => {
   ctx.state = {};
-  const cachedName = await cache.getAsync("username-${ctx.session.userId}");
+
+  const userId = ctx.session.userId;
+  const cachedName = await cache.getAsync("username-${userId}");
   if (cachedName){
     ctx.state.user_name = cachedName;
     return true;
   }
-  ctx.status = 403;
-  return false;
-  return false;
 
-  const db = await dbh(ctx);
-  const userId = ctx.session.userId;
   if (userId != null) {
+    const db = await dbh(ctx);
     const users = await db.query('SELECT name FROM user WHERE id = ?', [userId.toString()]);
     if (users.length > 0) {
       ctx.state.user_name = users[0].name;
