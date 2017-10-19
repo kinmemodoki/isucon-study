@@ -19,8 +19,8 @@ const config = (key) => {
       dbHost: process.env.ISUDA_DB_HOST || 'localhost',
       dbPort: process.env.ISUDA_DB_PORT || 3306,
       dbName: process.env.ISUDA_DB_NAME || 'isuda',
-      dbUser: process.env.ISUDA_DB_USER || 'root',
-      dbPassword: process.env.ISUDA_DB_PASSWORD || '',
+      dbUser: process.env.ISUDA_DB_USER || 'isucon',
+      dbPassword: process.env.ISUDA_DB_PASSWORD || 'isucon',
       isutarOrigin: process.env.ISUTAR_ORIGIN || 'http://localhost:5001',
       isupamOrigin: process.env.ISUPAM_ORIGIN || 'http://localhost:5050',
     };
