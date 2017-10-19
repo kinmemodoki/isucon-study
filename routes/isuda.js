@@ -60,6 +60,12 @@ const dbh = async (ctx) => {
 
 const setName = async (ctx) => {
   ctx.state = {};
+  const cachedName = await cache.getAsync("username-${ctx.session.userId}");
+  if (cachedName){
+    ctx.state.user_name = cachedName;
+    return true;
+  }
+
   const db = await dbh(ctx);
   const userId = ctx.session.userId;
   if (userId != null) {
@@ -236,6 +242,7 @@ router.post('login', async (ctx, next) => {
     return;
   }
   ctx.session.userId = rows[0].id;
+  cache.set("username-${rows[0].id}", rows[0].name);
   await ctx.redirect('/');
 });
 
