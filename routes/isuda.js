@@ -3,10 +3,23 @@ const router = require('koa-router')();
 const mysql = require('promise-mysql');
 const crypto = require('crypto');
 const axios = require('axios');
-const ejs = require('ejs');
 
-const LRU = require('lru-cache');
-ejs.cache = LRU(100);
+const fs = require('fs');
+const path = require('path');
+
+const ejs = require('ejs');
+const ejsOption = {
+    source: true,
+    //strict: true,
+    compileDebug: false,
+    cache: true,
+    root: path.resolve(__dirname, '../')
+};
+
+const indexRenderer = ejs.compile(fs.readFileSync(path.resolve(__dirname, `../views/index.ejs`), 'utf-8'), ejsOption);
+const keywordRenderer = ejs.compile(fs.readFileSync(path.resolve(__dirname, `../views/keyword.ejs`), 'utf-8'), ejsOption);
+const authenticateRenderer = ejs.compile(fs.readFileSync(path.resolve(__dirname, `../views/authenticate.ejs`), 'utf-8'), ejsOption);
+const registerRenderer = ejs.compile(fs.readFileSync(path.resolve(__dirname, `../views/register.ejs`), 'utf-8'), ejsOption);
 
 const redis = require("redis");
 const bluebird = require("bluebird");
@@ -137,7 +150,8 @@ router.get('', async (ctx, next) => {
   ctx.state.lastPage = lastPage;
   ctx.state.pages = pages;
 
-  await ctx.render('index', {});
+  //await ctx.render('index', {});
+  ctx.body = indexRenderer(ctx.state);
 });
 
 router.get('robots.txt', async (ctx, next) => {
@@ -184,8 +198,7 @@ router.get('register', async (ctx, next) => {
     return;
   }
   ctx.state.action = 'register';
-  await ctx.render('authenticate', {
-  });
+  ctx.body = authenticateRenderer(ctx.state);
 });
 
 router.post('register', async (ctx, next) => {
@@ -226,7 +239,8 @@ router.get('login', async (ctx, next) => {
     return;
   }
   ctx.state.action = 'login';
-  await ctx.render('authenticate', {});
+  ctx.body = authenticateRenderer(ctx.state);
+  //await ctx.render('authenticate', {});
 });
 
 router.post('login', async (ctx, next) => {
@@ -272,7 +286,8 @@ router.get('keyword/:keyword', async (ctx, next) => {
   ctx.state.entry = entries[0];
   ctx.state.entry.html = await htmlify(ctx, entries[0].description, entries[0].id);
   ctx.state.entry.stars = await loadStars(ctx, keyword);
-  await ctx.render('keyword');
+  //await ctx.render('keyword');
+  ctx.body = keywordRenderer(ctx.state);
 });
 
 router.post('keyword/:keyword', async (ctx, next) => {

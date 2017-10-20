@@ -1,4 +1,4 @@
-<%- include('header') %>
+<%- include('/views/header.ejs') %>
 <form class="form" action="/keyword" method="POST">
   <ul>
     <li><input type="text" name="keyword"></li>
@@ -8,7 +8,7 @@
 </form>
 
 <% for (var i = 0; i < entries.length; i++) { %>
-  <%- include('widget/keyword', { entry: entries[i] }) %>
+  <%- include('/views/widget/keyword.ejs', { entry: entries[i] }) %>
 <% } %>
 
 <nav class="pagination">
@@ -28,4 +28,4 @@
 <% } %>
   </ul>
 </nav>
-<%- include('footer') %>
+<%- include('/views/footer.ejs') %>
