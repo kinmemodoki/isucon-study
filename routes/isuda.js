@@ -5,6 +5,9 @@ const crypto = require('crypto');
 const axios = require('axios');
 const ejs = require('ejs');
 
+const LRU = require('lru-cache');
+ejs.cache = LRU(100);
+
 const redis = require("redis");
 const bluebird = require("bluebird");
 bluebird.promisifyAll(redis.RedisClient.prototype);
@@ -134,8 +137,7 @@ router.get('', async (ctx, next) => {
   ctx.state.lastPage = lastPage;
   ctx.state.pages = pages;
 
-  await ctx.render('index', {
-  });
+  await ctx.render('index', {});
 });
 
 router.get('robots.txt', async (ctx, next) => {
